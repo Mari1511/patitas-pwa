@@ -1,6 +1,6 @@
 import { MASCOTAS } from '../data.js';
 import { refugioDe } from '../components/petCard.js';
-import { edadTexto, claseEstado, $, $$ } from '../utils.js';
+import { edadTexto, claseEstado, iconoEspecie, $, $$ } from '../utils.js';
 import { abrirModalAdopcion } from '../modals/adopcion.js';
 
 export function render(id){
@@ -42,7 +42,7 @@ export function render(id){
         <span>${m.nombre}</span>
       </nav>
       <h1>${m.nombre}</h1>
-      <p>${m.raza} · ${edadTexto(m)} · ${m.sexo} · ${m.tamano}</p>
+      <p>${m.especie} · ${m.raza} · ${edadTexto(m)} · ${m.sexo} · ${m.tamano}</p>
     </div>
   </section>
 
@@ -68,6 +68,7 @@ export function render(id){
       <div class="detail-card">
         <h2>Ficha de ${m.nombre}</h2>
         <div class="info-grid">
+          <div class="info-item"><span class="lbl">Especie</span><span class="val">${iconoEspecie(m.especie)} ${m.especie}</span></div>
           <div class="info-item"><span class="lbl">Raza</span><span class="val">${m.raza}</span></div>
           <div class="info-item"><span class="lbl">Edad</span><span class="val">${edadTexto(m)}</span></div>
           <div class="info-item"><span class="lbl">Sexo</span><span class="val">${m.sexo}</span></div>

@@ -2,7 +2,15 @@ import { MASCOTAS } from '../data.js';
 import { petCardHTML } from '../components/petCard.js';
 
 export function render(){
-  const destacadas = MASCOTAS.filter(m => m.estado === 'Disponible').slice(0, 6);
+  // Destacadas: intercala perros y gatos disponibles
+  const disp = MASCOTAS.filter(m => m.estado === 'Disponible');
+  const perros = disp.filter(m => m.especie === 'Perro');
+  const gatos  = disp.filter(m => m.especie === 'Gato');
+  const destacadas = [];
+  for (let i = 0; destacadas.length < 6 && (i < perros.length || i < gatos.length); i++){
+    if (perros[i]) destacadas.push(perros[i]);
+    if (gatos[i] && destacadas.length < 6) destacadas.push(gatos[i]);
+  }
   const disponibles = MASCOTAS.filter(m => m.estado === 'Disponible').length;
   const adoptados  = MASCOTAS.filter(m => m.estado === 'Adoptado').length;
 
@@ -13,7 +21,7 @@ export function render(){
         <span class="eyebrow"><span class="dot"></span> Adopción responsable en San Luis Potosí</span>
         <h1>Encuentra a tu <em>mejor amigo</em> y cambia dos vidas</h1>
         <p class="hero-sub">
-          Somos la plataforma que conecta a perritos rescatados de refugios potosinos
+          Somos la plataforma que conecta a perros y gatos rescatados de refugios potosinos
           con familias responsables. Adopta, no compres. 🧡
         </p>
         <div class="hero-actions">
@@ -29,7 +37,7 @@ export function render(){
       <div class="hero-visual">
         <div class="hero-blob"></div>
         <div class="hero-photo">
-          <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=900&q=75" alt="Perrito esperando ser adoptado">
+          <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=900&q=75" alt="Perrita esperando ser adoptada">
         </div>
         <div class="float-card fc-1">
           <div class="fc-icon">🏠</div>
@@ -81,11 +89,11 @@ export function render(){
 
   <section class="section section-sand">
     <div class="container">
-      <div class="section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;max-width:none;flex-wrap:wrap;">
-        <div style="max-width:560px;">
+      <div class="section-head section-head-row">
+        <div>
           <span class="section-tag">En adopción</span>
           <h2>Ellos buscan una familia</h2>
-          <p>Conoce a algunos de los peluditos que están esperando su hogar definitivo.</p>
+          <p>Conoce a algunos de los perros y gatos que están esperando su hogar definitivo.</p>
         </div>
         <a href="#/mascotas" class="btn btn-ghost">Ver todas →</a>
       </div>
@@ -105,7 +113,7 @@ export function render(){
         <article class="step">
           <div class="step-num">💚</div>
           <h3>Salvas una vida</h3>
-          <p>Cada adopción libera un lugar en el refugio para otro perrito que lo necesita desesperadamente.</p>
+          <p>Cada adopción libera un lugar en el refugio para otro peludito que lo necesita desesperadamente.</p>
         </article>
         <article class="step">
           <div class="step-num">🩺</div>

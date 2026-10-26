@@ -1,5 +1,5 @@
 import { REFUGIOS } from '../data.js';
-import { edadTexto, claseEstado, iconoSexo } from '../utils.js';
+import { edadTexto, claseEstado, iconoSexo, iconoEspecie } from '../utils.js';
 
 const KEY_FAVS = 'patitas:favoritos';
 
@@ -33,7 +33,7 @@ export function petCardHTML(m){
         </div>
         <div class="pet-meta">
           <span class="chip">${iconoSexo(m.sexo)} ${m.sexo}</span>
-          <span class="chip">🐕 ${m.raza}</span>
+          <span class="chip">${iconoEspecie(m.especie)} ${m.raza}</span>
           <span class="chip">📏 ${m.tamano}</span>
         </div>
         <div class="pet-shelter">

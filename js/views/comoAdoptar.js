@@ -10,8 +10,9 @@ export function render(){
   const requisitos = [
     'Ser mayor de 18 años con identificación oficial',
     'Comprobante de domicilio reciente',
-    'Contar con espacio adecuado para el tamaño del perro',
+    'Contar con espacio adecuado para el tamaño y la especie de la mascota',
     'Compromiso de esterilización si aplica',
+    'Para gatos: ventanas y balcones con malla de protección',
     'Estar de acuerdo en recibir visitas de seguimiento',
     'No regalar, vender ni abandonar al peludito adoptado'
   ];
@@ -31,7 +32,7 @@ export function render(){
         <span class="section-tag">Paso a paso</span>
         <h2>Seis pasos hacia un final feliz</h2>
       </div>
-      <div class="steps" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
+      <div class="steps steps-auto">
         ${pasos.map(p => `
           <article class="step">
             <div class="step-num">${p.n}</div>
@@ -43,17 +44,17 @@ export function render(){
   </section>
 
   <section class="section section-sand">
-    <div class="container" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;">
+    <div class="container split-grid">
       <div>
         <span class="section-tag">Requisitos</span>
-        <h2 style="font-size:2rem;margin-bottom:22px;">¿Qué necesitas para adoptar?</h2>
+        <h2 class="split-title">¿Qué necesitas para adoptar?</h2>
         <div class="health-list">
           ${requisitos.map(r => `<div class="health-item"><span class="tick">✓</span> ${r}</div>`).join('')}
         </div>
       </div>
-      <div style="border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-lg);aspect-ratio:4/3.4;background:var(--sand);">
-        <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=900&q=75"
-             alt="Persona con su perro adoptado" style="width:100%;height:100%;object-fit:cover;">
+      <div class="split-photo" style="aspect-ratio:4/3.4;">
+        <img src="https://images.unsplash.com/photo-1574158622682-e40e69881006?auto=format&fit=crop&w=900&q=75"
+             alt="Gato adoptado descansando en casa">
       </div>
     </div>
   </section>

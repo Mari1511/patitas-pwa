@@ -33,6 +33,8 @@ export function claseEstado(estado){
 
 export function iconoSexo(sexo){ return sexo === 'Hembra' ? '♀' : '♂'; }
 
+export function iconoEspecie(especie){ return especie === 'Gato' ? '🐈' : '🐕'; }
+
 export function toast(msg, tipo = 'ok'){
   const wrap = $('#toastWrap');
   if (!wrap) return;

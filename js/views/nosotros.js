@@ -12,12 +12,12 @@ export function render(){
   </section>
 
   <section class="section">
-    <div class="container" style="display:grid;grid-template-columns:1.1fr 1fr;gap:52px;align-items:center;">
+    <div class="container split-grid">
       <div>
         <span class="section-tag">Nuestra misión</span>
-        <h2 style="font-size:2rem;margin-bottom:20px;">Menos perros en la calle, más familias felices</h2>
+        <h2 class="split-title">Menos perros y gatos en la calle, más familias felices</h2>
         <p style="color:var(--muted);margin-bottom:18px;">
-          En San Luis Potosí miles de perros viven en situación de calle o en refugios saturados.
+          En San Luis Potosí miles de perros y gatos viven en situación de calle o en refugios saturados.
           Patitas Potosinas nació en 2023 para digitalizar y transparentar el proceso de adopción,
           dándole visibilidad a cada peludito que busca hogar.
         </p>
@@ -31,9 +31,9 @@ export function render(){
           <div class="hero-stat"><strong>480+</strong><span>Adopciones exitosas</span></div>
         </div>
       </div>
-      <div style="border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-lg);aspect-ratio:4/3.6;background:var(--sand);">
+      <div class="split-photo" style="aspect-ratio:4/3.6;">
         <img src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=900&q=75"
-             alt="Equipo de voluntarios con perros" style="width:100%;height:100%;object-fit:cover;">
+             alt="Perro rescatado en el refugio">
       </div>
     </div>
   </section>
@@ -44,7 +44,7 @@ export function render(){
         <span class="section-tag">Aliados</span>
         <h2>Refugios que confían en nosotros</h2>
       </div>
-      <div class="pets-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));">
+      <div class="pets-grid">
         ${refugios.map(r => `
           <div class="step" style="text-align:left;">
             <div class="step-num">🏠</div>

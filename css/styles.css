@@ -36,7 +36,10 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+/* Evita scroll horizontal en móvil por elementos decorativos que sobresalen */
+body{overflow-x:hidden;}
+@supports (overflow:clip){body{overflow-x:clip;}}
 body{
   margin:0;
   font-family:var(--font-body);
@@ -115,6 +118,7 @@ ul{margin:0;padding:0;list-style:none;}
 
 .mobile-menu{
   display:none;position:fixed;top:var(--nav-h);left:0;right:0;z-index:190;
+  max-height:calc(100vh - var(--nav-h));max-height:calc(100dvh - var(--nav-h));overflow-y:auto;
   background:var(--cream);border-bottom:1px solid var(--line);
   padding:16px 24px 26px;box-shadow:var(--shadow);
   flex-direction:column;gap:6px;
@@ -206,6 +210,14 @@ ul{margin:0;padding:0;list-style:none;}
 }
 .section-head h2{font-size:clamp(1.9rem,3.2vw,2.6rem);margin-bottom:16px;}
 .section-head p{color:var(--muted);font-size:1.05rem;}
+.section-head-row{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;max-width:none;flex-wrap:wrap;}
+.section-head-row > div{max-width:560px;}
+
+/* Bloque de dos columnas texto + foto (Nosotros, Cómo adoptar) */
+.split-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:52px;align-items:center;}
+.split-title{font-size:clamp(1.6rem,4vw,2rem);margin-bottom:20px;}
+.split-photo{border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-lg);background:var(--sand);}
+.split-photo img{width:100%;height:100%;object-fit:cover;}
 
 /* ============================================================
    CÓMO FUNCIONA
@@ -223,13 +235,14 @@ ul{margin:0;padding:0;list-style:none;}
 .step:nth-child(1) .step-num{background:var(--primary-soft);color:var(--primary-dark);}
 .step:nth-child(2) .step-num{background:var(--accent-soft);color:var(--accent);}
 .step:nth-child(3) .step-num{background:var(--amber-soft);color:var(--amber);}
+.steps-auto{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));}
 .step h3{font-size:1.22rem;margin-bottom:10px;}
 .step p{color:var(--muted);font-size:.95rem;}
 
 /* ============================================================
    GRID DE MASCOTAS / TARJETAS
    ============================================================ */
-.pets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:26px;}
+.pets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(272px,100%),1fr));gap:26px;}
 .pet-card{
   background:#fff;border-radius:var(--radius-lg);overflow:hidden;
   border:1px solid var(--line);display:flex;flex-direction:column;
@@ -288,7 +301,17 @@ ul{margin:0;padding:0;list-style:none;}
   padding:22px;box-shadow:var(--shadow-sm);margin-bottom:34px;
 }
 .search-row{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
-.search-box{position:relative;flex:1;min-width:240px;}
+.search-box{position:relative;flex:1 1 240px;min-width:0;}
+.order-select{flex:0 1 230px;max-width:100%;}
+
+/* Pestañas de especie */
+.species-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.species-tab{
+  padding:9px 18px;border-radius:999px;border:1.5px solid var(--line);background:var(--cream);
+  font-weight:800;font-size:.9rem;color:#5B4E44;transition:background .18s, color .18s, border-color .18s;
+}
+.species-tab:hover{border-color:var(--primary);color:var(--primary-dark);}
+.species-tab.active{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 6px 14px rgba(231,111,81,.28);}
 .search-box .icon{position:absolute;left:17px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:17px;pointer-events:none;}
 .input{
   width:100%;padding:13px 17px;border-radius:12px;border:1.5px solid var(--line);
@@ -577,6 +600,7 @@ select.input{cursor:pointer;appearance:none;
   .detail-aside{position:static;}
   .auth-grid{grid-template-columns:1fr;gap:36px;}
   .footer-grid{grid-template-columns:1fr 1fr;gap:36px;}
+  .split-grid{grid-template-columns:1fr;gap:36px;}
 }
 @media (max-width:860px){
   .nav-links,.nav-actions .btn-ghost{display:none;}
@@ -602,9 +626,56 @@ select.input{cursor:pointer;appearance:none;
   .footer-grid{grid-template-columns:1fr;}
   .footer-bottom{justify-content:center;text-align:center;}
   .toast-wrap{left:18px;right:18px;bottom:18px;}
-  .gallery-thumbs{grid-template-columns:repeat(3,1fr);}
-  .float-card{padding:11px 14px;}
-  .float-card .fc-icon{width:36px;height:36px;font-size:16px;}
+  .gallery-thumbs{gap:8px;}
+  .gallery-thumb{border-radius:10px;}
+  .float-card{padding:10px 12px;gap:10px;}
+  .float-card .fc-icon{width:34px;height:34px;font-size:15px;}
+  .fc-1{left:10px;top:14px;}
+  .fc-2{left:10px;bottom:20px;}
+
+  /* Tipografía y espaciados más compactos */
+  .hero h1 em{white-space:normal;}
+  .hero-sub{font-size:1rem;}
+  .hero-actions .btn{flex:1 1 auto;}
+  .section{padding:52px 0;}
+  .section-head{margin-bottom:34px;}
+  .page-head{padding:38px 0 30px;}
+  .step{padding:26px 22px;}
+  .detail-layout{padding:28px 0 60px;gap:24px;}
+  .detail-card{padding:22px 20px;margin-top:18px;}
+  .gallery-main{border-radius:var(--radius-lg);}
+  .aside-card{padding:22px 20px;}
+  .cta-banner{padding:40px 20px;border-radius:var(--radius-lg);}
+  .filters{padding:16px;}
+  .order-select{flex:1 1 100%;}
+  .modal-overlay{padding:12px;}
+  .modal{border-radius:var(--radius-lg);}
+  .modal-head{border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+  .toast{min-width:0;}
+  .empty{padding:52px 18px;}
+
+  /* Los botones pueden partir su texto en pantallas angostas */
+  .btn{white-space:normal;text-align:center;}
+  .btn-lg{padding:14px 24px;}
+
+  /* iOS hace zoom al enfocar campos con letra menor a 16px */
+  .input,.newsletter input{font-size:16px;}
+}
+@media (max-width:420px){
+  .container,.container-wide{padding:0 16px;}
+  .logo{gap:8px;}
+  .logo-mark{width:38px;height:38px;font-size:19px;border-radius:11px;}
+  .logo-text strong{font-size:1.02rem;}
+  .nav-actions{gap:6px;}
+  .btn-install{padding:8px 12px;font-size:.78rem;}
+  .filter-grid{grid-template-columns:1fr;}
+  .hero-stats{gap:18px;}
+  .info-grid{grid-template-columns:1fr 1fr;}
+  .newsletter{flex-direction:column;}
+  .species-tab{flex:1 1 auto;padding:9px 12px;}
+}
+@media (max-width:360px){
+  .logo-text span{display:none;}
 }
 
 /* ===== PWA ===== */

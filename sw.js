@@ -4,7 +4,7 @@
    una vista, el CSS o una foto. Así el teléfono descarga
    la versión nueva y avisa que "el catálogo se actualizó".
    ========================================================= */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE_APP = `patitas-app-${VERSION}`;         // cascarón + código + íconos
 const CACHE_RUNTIME = `patitas-runtime-${VERSION}`; // fuentes y fotos externas
 

@@ -2,7 +2,8 @@ import { MASCOTAS } from '../data.js';
 import { petCardHTML } from '../components/petCard.js';
 import { EDAD_CATEGORIAS, categoriaEdad, $, $$ } from '../utils.js';
 
-const filtros = { q:'', sexo:'', edad:'', tamano:'', estado:'', orden:'recientes' };
+const FILTROS_VACIOS = { q:'', especie:'', sexo:'', edad:'', tamano:'', estado:'', orden:'recientes' };
+const filtros = { ...FILTROS_VACIOS };
 
 export function render(){
   return `
@@ -10,7 +11,7 @@ export function render(){
     <div class="container">
       <nav class="breadcrumb"><a href="#/">Inicio</a> <span>›</span> <span>Mascotas</span></nav>
       <h1>Mascotas en adopción</h1>
-      <p>Encuentra a tu compañero ideal. Usa los filtros para afinar tu búsqueda por sexo, edad, tamaño o estado.</p>
+      <p>Encuentra a tu compañero ideal. Perros y gatos rescatados esperan un hogar. Usa los filtros para afinar tu búsqueda por especie, sexo, edad, tamaño o estado.</p>
     </div>
   </section>
 
@@ -20,15 +21,21 @@ export function render(){
         <div class="search-row">
           <div class="search-box">
             <span class="icon">🔍</span>
-            <input type="search" class="input" id="fQ" placeholder="Buscar por nombre o raza…" />
+            <input type="search" class="input" id="fQ" placeholder="Buscar por nombre, raza o especie…" />
           </div>
-          <select class="input" id="fOrden" style="max-width:230px;">
+          <select class="input order-select" id="fOrden">
             <option value="recientes">Ordenar: Recientes</option>
             <option value="nombre">Nombre (A–Z)</option>
             <option value="edad-asc">Edad: menor a mayor</option>
             <option value="edad-desc">Edad: mayor a menor</option>
             <option value="urgente">Casos Urgentes</option>
           </select>
+        </div>
+
+        <div class="species-tabs" role="group" aria-label="Filtrar por especie">
+          <button type="button" class="species-tab" data-especie="">🐾 Todos</button>
+          <button type="button" class="species-tab" data-especie="Perro">🐶 Perros</button>
+          <button type="button" class="species-tab" data-especie="Gato">🐱 Gatos</button>
         </div>
 
         <div class="filter-grid">
@@ -87,6 +94,15 @@ export function init(){
   $('#fTamano').value = filtros.tamano;
   $('#fEstado').value = filtros.estado;
   $('#fOrden').value = filtros.orden;
+  marcarEspecie();
+
+  $$('.species-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      filtros.especie = btn.dataset.especie;
+      marcarEspecie();
+      aplicarFiltros();
+    });
+  });
 
   const update = () => {
     filtros.q = $('#fQ').value;
@@ -103,29 +119,41 @@ export function init(){
     $(sel).addEventListener('change', update);
   });
 
-  $('#clearFilters').addEventListener('click', () => {
-    Object.assign(filtros, { q:'', sexo:'', edad:'', tamano:'', estado:'', orden:'recientes' });
-    $('#fQ').value = '';
-    $('#fSexo').value = '';
-    $('#fEdad').value = '';
-    $('#fTamano').value = '';
-    $('#fEstado').value = '';
-    $('#fOrden').value = 'recientes';
-    aplicarFiltros();
-  });
+  $('#clearFilters').addEventListener('click', limpiarFiltros);
 
+  aplicarFiltros();
+}
+
+function marcarEspecie(){
+  $$('.species-tab').forEach(b => {
+    const activo = b.dataset.especie === filtros.especie;
+    b.classList.toggle('active', activo);
+    b.setAttribute('aria-pressed', activo);
+  });
+}
+
+function limpiarFiltros(){
+  Object.assign(filtros, FILTROS_VACIOS);
+  $('#fQ').value = '';
+  $('#fSexo').value = '';
+  $('#fEdad').value = '';
+  $('#fTamano').value = '';
+  $('#fEstado').value = '';
+  $('#fOrden').value = 'recientes';
+  marcarEspecie();
   aplicarFiltros();
 }
 
 function aplicarFiltros(){
   const q = filtros.q.trim().toLowerCase();
   let lista = MASCOTAS.filter(m => {
-    const okQ = !q || m.nombre.toLowerCase().includes(q) || m.raza.toLowerCase().includes(q);
+    const okQ = !q || m.nombre.toLowerCase().includes(q) || m.raza.toLowerCase().includes(q) || m.especie.toLowerCase().includes(q);
+    const okEsp = !filtros.especie || m.especie === filtros.especie;
     const okSexo = !filtros.sexo || m.sexo === filtros.sexo;
     const okEdad = !filtros.edad || categoriaEdad(m) === filtros.edad;
     const okTam = !filtros.tamano || m.tamano === filtros.tamano;
     const okEst = !filtros.estado || m.estado === filtros.estado;
-    return okQ && okSexo && okEdad && okTam && okEst;
+    return okQ && okEsp && okSexo && okEdad && okTam && okEst;
   });
 
   const edadNum = m => m.unidad === 'años' ? m.edad : m.edad / 12;
@@ -144,21 +172,12 @@ function aplicarFiltros(){
   if (!lista.length){
     cont.innerHTML = `
       <div class="empty">
-        <div class="emoji">🐕‍🦺</div>
+        <div class="emoji">🐾</div>
         <h3>No encontramos peluditos con esos filtros</h3>
         <p>Intenta ampliar tu búsqueda o limpiar los filtros para ver todas las mascotas disponibles.</p>
         <button class="btn btn-primary" id="emptyReset" type="button">Ver todas las mascotas</button>
       </div>`;
-    $('#emptyReset').addEventListener('click', () => {
-      Object.assign(filtros, { q:'', sexo:'', edad:'', tamano:'', estado:'', orden:'recientes' });
-      $('#fQ').value = '';
-      $('#fSexo').value = '';
-      $('#fEdad').value = '';
-      $('#fTamano').value = '';
-      $('#fEstado').value = '';
-      $('#fOrden').value = 'recientes';
-      aplicarFiltros();
-    });
+    $('#emptyReset').addEventListener('click', limpiarFiltros);
     return;
   }
 
