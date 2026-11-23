@@ -70,6 +70,9 @@ npx serve
 - Navegación tipo SPA (sin recargas de página).
 - Filtros combinables y ordenamiento en el catálogo.
 - Modal de solicitud de adopción con validación de campos.
+- Correo de confirmación automático al enviar una solicitud (EmailJS).
+- Solicitudes sin conexión: se guardan en el dispositivo y se envían solas al volver el Internet.
+- Botón para enviar la solicitud al refugio por WhatsApp.
 - Toasts (notificaciones) animados.
 - Validación de correo, teléfono y contraseña.
 - Diseño 100% responsivo (móvil, tablet y escritorio).
@@ -103,16 +106,93 @@ El sistema no contempla pagos entre adoptante y refugio. Solo se firma un compro
 
 ---
 
+## 📬 Solicitudes de adopción: correo, WhatsApp y modo sin conexión
+
+Al enviar el formulario de adopción, la solicitud ya no solo se muestra en pantalla: se **envía un correo de confirmación** al adoptante y, si no hay Internet, **se guarda y se envía después automáticamente**.
+
+### ¿Cómo funciona?
+
+```
+Formulario ──► Se guarda en IndexedDB (bandeja de salida)
+                 │
+                 ├─ Con Internet ──► Se envía el correo con EmailJS ──► "¡Solicitud enviada!"
+                 │
+                 └─ Sin Internet ──► "Solicitud guardada 📥"
+                                      └─ Al volver la conexión ──► se envía sola + notificación
+```
+
+1. **Bandeja de salida (outbox).** Cada solicitud se guarda primero en IndexedDB, una pequeña base de datos del navegador, para que no se pierda aunque se cierre la app.
+2. **Envío del correo.** Se hace una petición `fetch()` a la API REST de [EmailJS](https://www.emailjs.com), que manda el correo desde una cuenta de Gmail conectada. No se necesita servidor propio ni librerías.
+3. **Envío diferido sin conexión.**
+   - **Chrome, Edge y Android:** se usa la **Background Sync API**. El service worker (`sw.js`) envía las solicitudes pendientes en cuanto vuelve la conexión, **aunque la app esté cerrada**, y muestra una notificación del sistema.
+   - **Safari y Firefox** (no tienen Background Sync): la página envía las pendientes al detectar el evento `online` o la próxima vez que se abre la app.
+   - Si EmailJS falla, la solicitud **no se borra** de la cola y se reintenta después.
+4. **WhatsApp.** En la pantalla de éxito hay un botón que abre WhatsApp (`https://wa.me/<número>?text=...`) con un mensaje ya escrito para el refugio, con los datos del adoptante. El usuario solo presiona "Enviar". Es gratis y no requiere cuenta.
+5. **Avisos al usuario.** Se muestran toasts y notificaciones del sistema: "Solicitud enviada", "Solicitud guardada (sin conexión)" y "Ya hay conexión: tu solicitud se envió".
+
+### ¿Por qué correo y no SMS o WhatsApp automático?
+
+| Canal | Resultado |
+|-------|-----------|
+| **Correo (EmailJS)** | ✅ Automático, gratis (200 correos/mes) y sin servidor. Compatible con el envío sin conexión. |
+| **WhatsApp (enlace `wa.me`)** | ✅ Gratis, pero el usuario debe presionar "Enviar"; por eso es un complemento. |
+| **SMS / WhatsApp automático** | ❌ Requiere Twilio o WhatsApp Business API, un servidor para guardar las claves secretas y pago por mensaje. Queda para una fase futura con backend. |
+
+### Configuración de EmailJS
+
+Las claves están en `js/config.js` (`publicKey`, `serviceId`, `templateId`). Son claves **públicas**: EmailJS está diseñado para usarse desde el navegador. La *Private Key* nunca va en el proyecto.
+
+La plantilla del correo en EmailJS usa estas variables:
+
+| Variable | Contenido |
+|----------|-----------|
+| `{{to_email}}`, `{{to_name}}` | Correo y nombre del adoptante (destinatario) |
+| `{{telefono}}`, `{{ciudad}}`, `{{vivienda}}`, `{{mensaje}}` | Datos del formulario |
+| `{{mascota}}`, `{{mascota_raza}}` | Mascota solicitada |
+| `{{refugio}}`, `{{refugio_tel}}`, `{{refugio_correo}}` | Refugio responsable (Reply To = correo del refugio) |
+| `{{fecha}}` | Fecha y hora de la solicitud |
+
+Si las claves se dejan con `TU_...`, la app funciona en **modo demo**: la cola offline trabaja igual, pero el correo solo se imprime en la consola.
+
+> ⚠️ Si cambias `js/config.js` (o cualquier archivo), **sube el número de `VERSION` en `sw.js`**. Si no, el navegador sigue usando la copia guardada en caché.
+
+> 🔒 Recomendado: en EmailJS → Account → Security, activa **Allowed origins** con el dominio de la app, para que nadie más use la cuota de correos.
+
+### Cómo probarlo
+
+1. Levanta el servidor y abre la app. Solicita una mascota con tu correo: debe llegar la confirmación en segundos (revisa spam la primera vez).
+2. En DevTools → **Network** → **Offline**, envía otra solicitud: aparece "Solicitud guardada 📥".
+3. Vuelve a **No throttling**: el correo llega solo y aparece el aviso de envío.
+4. Las solicitudes pendientes se pueden ver en DevTools → **Application** → **IndexedDB** → `patitas-outbox`.
+
+### Archivos involucrados
+
+| Archivo | Cambio |
+|---------|--------|
+| `js/config.js` | **Nuevo.** Claves de EmailJS e instrucciones de configuración. |
+| `js/outbox.js` | **Nuevo.** Bandeja de salida: guarda en IndexedDB, envía, registra Background Sync y reintenta en `online`. |
+| `js/modals/adopcion.js` | El formulario usa la bandeja de salida, muestra "enviada" o "guardada" y agrega el botón de WhatsApp. |
+| `js/pwa.js` | Inicia la bandeja de salida y muestra los avisos cuando se envían pendientes. |
+| `sw.js` | Evento `sync` que envía las pendientes en segundo plano; nuevos archivos en caché; versión `v4`. |
+| `css/styles.css` | Estilos del botón de WhatsApp y del botón deshabilitado ("Enviando…"). |
+
+---
+
 ## 📁 Estructura del proyecto
 
 ```
 patitas-potosinas/
 ├── index.html              # Entrada + navbar + footer
 ├── README.md               # Este archivo
+├── manifest.json           # Configuración de la PWA (instalable)
+├── sw.js                   # Service worker: caché offline y envío en segundo plano
 ├── css/
 │   └── styles.css          # Todos los estilos
 └── js/
     ├── app.js              # Bootstrap y eventos globales
+    ├── config.js           # Claves de EmailJS
+    ├── outbox.js           # Bandeja de salida de solicitudes (offline)
+    ├── pwa.js              # Service worker, instalación y notificaciones
     ├── router.js           # Enrutador SPA
     ├── data.js             # Datos mock (mascotas y refugios)
     ├── utils.js            # Helpers, validaciones, toasts
@@ -154,6 +234,9 @@ patitas-potosinas/
 - **CSS3** — Variables, Grid, Flexbox, animaciones.
 - **JavaScript ES6+** — Módulos nativos, router, componentes.
 - **Google Fonts** — Fraunces + Nunito Sans.
+- **PWA** — Service Worker, Cache API, Background Sync, Notifications API.
+- **IndexedDB** — Bandeja de salida de solicitudes sin conexión.
+- **EmailJS** (API REST) — Envío de correos de confirmación sin servidor propio.
 
 Sin frameworks, sin dependencias, sin build step.
 

@@ -6,6 +6,7 @@
    - Notificaciones con la Notifications API (sin servidor)
    ========================================================= */
 import { toast } from './utils.js';
+import { initOutbox } from './outbox.js';
 
 const ICONO = './img/icons/icon-192.png';
 
@@ -13,6 +14,18 @@ export function initPWA() {
   registrarServiceWorker();
   initAvisoSinConexion();
   initBotonInstalar();
+  // Solicitudes guardadas sin conexión (Safari/Firefox las envían desde aquí)
+  initOutbox((n) => avisarSolicitudesEnviadas(n));
+}
+
+function avisarSolicitudesEnviadas(n) {
+  avisar(
+    'Solicitud enviada 🐾',
+    n === 1
+      ? 'Ya hay conexión: tu solicitud de adopción pendiente se envió. Revisa tu correo.'
+      : `Ya hay conexión: se enviaron ${n} solicitudes pendientes. Revisa tu correo.`,
+    '#/mascotas'
+  );
 }
 
 /* ---------- 1. Service worker ---------- */
@@ -27,6 +40,7 @@ async function registrarServiceWorker() {
     if (type === 'UPDATED') {
       avisar('El catálogo se actualizó', 'Hay nuevos peluditos o cambios en las fichas.', '#/mascotas');
     }
+    if (type === 'OUTBOX_SENT') avisarSolicitudesEnviadas(e.data.mascotas.length);
     if (type === 'NAVIGATE' && url) location.href = url; // solo cambia el #
   });
 
@@ -113,11 +127,20 @@ export async function avisar(titulo, cuerpo, ruta = '#/') {
 }
 
 // Se llama desde js/modals/adopcion.js
-export async function notificarSolicitudAdopcion(nombreMascota, nombreRefugio) {
-  if (await pedirPermisoNotificaciones()) {
+// enviada = false → quedó guardada en la cola offline
+export async function notificarSolicitudAdopcion(nombreMascota, nombreRefugio, enviada = true) {
+  // Se pide el permiso aunque esté en cola: así el SW puede avisar cuando se envíe
+  if (!(await pedirPermisoNotificaciones())) return;
+  if (enviada) {
     avisar(
       'Solicitud enviada 🐾',
-      `Tu solicitud para adoptar a ${nombreMascota} llegó a ${nombreRefugio}. Te contactarán en máximo 48 horas.`,
+      `Tu solicitud para adoptar a ${nombreMascota} llegó a ${nombreRefugio}. Te enviamos un correo de confirmación.`,
+      '#/mascotas'
+    );
+  } else {
+    avisar(
+      'Solicitud guardada 📥',
+      `No hay conexión. Tu solicitud para adoptar a ${nombreMascota} se enviará en cuanto vuelva el Internet.`,
       '#/mascotas'
     );
   }

@@ -4,7 +4,7 @@
    una vista, el CSS o una foto. Así el teléfono descarga
    la versión nueva y avisa que "el catálogo se actualizó".
    ========================================================= */
-const VERSION = 'v2';
+const VERSION = 'v4';
 const CACHE_APP = `patitas-app-${VERSION}`;         // cascarón + código + íconos
 const CACHE_RUNTIME = `patitas-runtime-${VERSION}`; // fuentes y fotos externas
 
@@ -18,6 +18,8 @@ const APP_SHELL = [
   './css/styles.css',
   './js/app.js',
   './js/pwa.js',
+  './js/config.js',
+  './js/outbox.js',
   './js/data.js',
   './js/router.js',
   './js/utils.js',
@@ -135,3 +137,80 @@ self.addEventListener('notificationclick', (event) => {
     return self.clients.openWindow(destino);
   })());
 });
+
+/* ---------- BACKGROUND SYNC: envía solicitudes guardadas sin conexión ----------
+   Copia mínima de js/outbox.js (el SW no puede importar módulos ES6 en todos
+   los navegadores). Si el envío falla, se lanza un error y el navegador
+   vuelve a intentarlo más tarde por su cuenta. */
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'enviar-solicitudes') event.waitUntil(enviarSolicitudes());
+});
+
+function abrirOutbox() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('patitas-outbox', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('solicitudes', { keyPath: 'id', autoIncrement: true });
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function outboxOp(db, modo, fn) {
+  return new Promise((resolve, reject) => {
+    const t = db.transaction('solicitudes', modo);
+    const r = fn(t.objectStore('solicitudes'));
+    t.oncomplete = () => resolve(r.result);
+    t.onerror = () => reject(t.error);
+  });
+}
+
+async function enviarSolicitudes() {
+  const db = await abrirOutbox();
+  const pendientes = await outboxOp(db, 'readonly', (s) => s.getAll());
+  const enviadas = [];
+  let fallo = false;
+
+  for (const r of pendientes) {
+    try {
+      if (r.endpoint) {
+        const resp = await fetch(r.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(r.payload),
+        });
+        if (!resp.ok) throw new Error('EmailJS ' + resp.status);
+      } else {
+        console.info('[Patitas · MODO DEMO] Correo que se enviaría:', r.payload.template_params);
+      }
+      await outboxOp(db, 'readwrite', (s) => s.delete(r.id));
+      enviadas.push(r.payload.template_params.mascota);
+    } catch (err) {
+      console.error('No se pudo enviar la solicitud', r.id, err);
+      fallo = true;
+    }
+  }
+
+  if (enviadas.length) await avisarEnvio(enviadas);
+  if (fallo) throw new Error('Quedan solicitudes pendientes'); // el navegador reintenta
+}
+
+async function avisarEnvio(mascotas) {
+  const ventanas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const visible = ventanas.some((c) => c.visibilityState === 'visible');
+  if (visible) {
+    ventanas.forEach((c) => c.postMessage({ type: 'OUTBOX_SENT', mascotas }));
+    return;
+  }
+  // App cerrada o en segundo plano: notificación del sistema (si hay permiso)
+  if (self.Notification && Notification.permission === 'granted') {
+    await self.registration.showNotification('Solicitud enviada 🐾', {
+      body: mascotas.length === 1
+        ? `Ya hay conexión: tu solicitud para adoptar a ${mascotas[0]} se envió. Revisa tu correo.`
+        : `Ya hay conexión: se enviaron ${mascotas.length} solicitudes de adopción. Revisa tu correo.`,
+      icon: './img/icons/icon-192.png',
+      badge: './img/icons/icon-192.png',
+      tag: 'outbox',
+      data: { url: '#/mascotas' },
+    });
+  }
+}
